@@ -1,23 +1,58 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { globalStyles } from '../styles/globalStyles';
+import { View, Text, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { styles } from '../styles/styles';
 
-export default function TaskItem({ task, onPress, onDelete }) {
+const TaskItem = ({ task, onPress, onToggleComplete }) => {
   return (
-    <TouchableOpacity onPress={onPress}>
-      <View style={globalStyles.taskItem}>
-        <View style={{ flex: 1 }}>
-          <Text style={globalStyles.taskTitle}>{task.title}</Text>
+    <TouchableOpacity 
+      onPress={onPress} 
+      style={[
+        styles.enhancedTaskItem,
+        task.completed && styles.completedTaskItem
+      ]}
+    >
+      <View style={styles.checkboxContainer}>
+        <TouchableOpacity 
+          style={[
+            styles.enhancedCheckbox,
+            task.completed && styles.enhancedCheckboxChecked
+          ]}
+          onPress={() => onToggleComplete(task.id, !task.completed)}
+        >
+          {task.completed && (
+            <Ionicons name="checkmark" size={16} color="white" />
+          )}
+        </TouchableOpacity>
+        <View style={styles.textContainer}>
+          <Text 
+            style={[
+              styles.enhancedTaskTitle,
+              task.completed && styles.completedText
+            ]}
+          >
+            {task.title}
+          </Text>
           {task.description && (
-            <Text style={globalStyles.taskDescription} numberOfLines={1}>
+            <Text 
+              style={[
+                styles.enhancedTaskDescription,
+                task.completed && styles.completedText
+              ]}
+              numberOfLines={2}
+            >
               {task.description}
             </Text>
           )}
+          {task.dueDate && (
+            <Text style={styles.enhancedTaskDueDate}>
+              <Ionicons name="calendar" size={12} color="#666" /> {task.dueDate}
+            </Text>
+          )}
         </View>
-        <TouchableOpacity onPress={onDelete} style={globalStyles.deleteIcon}>
-          <Text style={{ color: 'red' }}>✕</Text>
-        </TouchableOpacity>
       </View>
     </TouchableOpacity>
   );
-}
+};
+
+export default TaskItem;
