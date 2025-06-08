@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, Alert } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { deleteTask, updateTask } from '../services/api';
+import { Ionicons } from '@expo/vector-icons';
 import { styles } from '../styles/styles';
+import { updateTask, deleteTask } from '../services/api';
 
 const TaskDetails = () => {
   const navigation = useNavigation();
   const route = useRoute();
-  const { task: initialTask } = route.params;
+  const { task: initialTask, refreshList } = route.params; // Get refreshList from params
   const [task, setTask] = useState(initialTask);
 
   const handleToggleComplete = async () => {
@@ -17,13 +18,29 @@ const TaskDetails = () => {
         completed: !task.completed 
       });
       setTask(updatedTask);
+      
+      // Call refreshList if it exists to update the TaskList
+      if (refreshList) {
+        refreshList();
+      }
     } catch (error) {
       console.error('Error updating task:', error);
+      Alert.alert('Error', 'Failed to update task status');
     }
   };
 
   const handleEdit = () => {
-    navigation.navigate('EditTask', { task });
+    navigation.navigate('EditTask', { 
+      task,
+      refreshList: () => {
+        // This will refresh both TaskDetails and TaskList when returning from EditTask
+        if (refreshList) refreshList();
+        navigation.navigate('TaskDetails', { 
+          task: {...task},
+          refreshList 
+        });
+      }
+    });
   };
 
   const handleDelete = () => {
@@ -32,54 +49,81 @@ const TaskDetails = () => {
       'Are you sure you want to delete this task? This action cannot be undone.',
       [
         { text: 'Cancel', style: 'cancel' },
-        { text: 'Delete', onPress: confirmDelete, style: 'destructive' },
+        { 
+          text: 'Delete', 
+          onPress: () => {
+            deleteTask(task.id)
+              .then(() => {
+                if (refreshList) {
+                  refreshList(); // Refresh the task list
+                }
+                navigation.goBack();
+              })
+              .catch(error => {
+                console.error('Error deleting task:', error);
+                Alert.alert('Error', 'Failed to delete task');
+              });
+          }, 
+          style: 'destructive' 
+        },
       ]
     );
   };
 
-  const confirmDelete = async () => {
-    try {
-      await deleteTask(task.id);
-      navigation.goBack();
-    } catch (error) {
-      console.error('Error deleting task:', error);
-    }
-  };
-
   return (
-    <View style={styles.container}>
-      <View style={styles.detailsContainer}>
-        <Text style={styles.detailsTitle}>{task.title}</Text>
-        
-        <Text style={styles.detailsLabel}>Due Date</Text>
-        <Text>{task.dueDate}</Text>
-        
-        <Text style={styles.detailsLabel}>Description</Text>
-        <Text>{task.description}</Text>
-        
-        <View style={styles.checkboxContainer}>
-          <TouchableOpacity 
-            style={[styles.checkbox, task.completed && styles.checkboxChecked]}
-            onPress={handleToggleComplete}
-          />
-          <Text style={styles.checkboxText}>
-            {task.completed ? 'Completed' : 'Mark as completed'}
+    <View style={styles.detailsContainer}>
+      <View style={styles.detailsCard}>
+        <View style={[
+          styles.statusBadge, 
+          task.completed ? styles.completedBadge : styles.pendingBadge
+        ]}>
+          <Text style={[
+            styles.statusText,
+            task.completed ? styles.completedText : styles.pendingText
+          ]}>
+            {task.completed ? 'Completed' : 'Pending'}
           </Text>
         </View>
-        
-        <View style={styles.actionButtons}>
+
+        <Text style={styles.detailsTitle}>{task.title}</Text>
+
+        <View style={styles.detailSection}>
+          <Text style={styles.detailLabel}>DESCRIPTION</Text>
+          <Text style={styles.detailValue}>{task.description}</Text>
+        </View>
+
+        <TouchableOpacity 
+          style={[
+            styles.actionButton,
+            task.completed ? styles.secondaryAction : styles.primaryAction
+          ]}
+          onPress={handleToggleComplete}
+        >
+          <Text style={[
+            styles.actionButtonText,
+            task.completed ? styles.secondaryButtonText : styles.primaryButtonText
+          ]}>
+            {task.completed ? 'Mark as Pending' : 'Mark as Completed'}
+          </Text>
+        </TouchableOpacity>
+
+        <View style={styles.actionButtonRow}>
           <TouchableOpacity 
-            style={[styles.button, styles.actionButton]}
+            style={[styles.actionButton, styles.secondaryAction]}
             onPress={handleEdit}
           >
-            <Text style={styles.buttonText}>Edit Task</Text>
+            <Text style={[styles.actionButtonText, styles.secondaryButtonText]}>
+              <Ionicons name="create-outline" size={16} /> Edit
+            </Text>
           </TouchableOpacity>
           
           <TouchableOpacity 
-            style={[styles.button, styles.actionButton, styles.deleteButton]}
+            style={[styles.actionButton, styles.dangerAction]}
             onPress={handleDelete}
           >
-            <Text style={styles.buttonText}>Delete Task</Text>
+            <Text style={[styles.actionButtonText, styles.dangerButtonText]}>
+              <Ionicons name="trash-outline" size={16} /> Delete
+            </Text>
           </TouchableOpacity>
         </View>
       </View>

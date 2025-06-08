@@ -1,63 +1,62 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { styles } from '../styles/styles';
 
-const TaskForm = ({ task, onSubmit, onCancel }) => {
-  const [title, setTitle] = useState(task ? task.title : '');
-  const [description, setDescription] = useState(task ? task.description : '');
-  const [dueDate, setDueDate] = useState(task ? task.dueDate : '');
+const TaskForm = ({ onSubmit, onCancel, task }) => {
+  const [title, setTitle] = useState(task?.title || '');
+  const [description, setDescription] = useState(task?.description || '');
 
   const handleSubmit = () => {
     const taskData = {
       title,
       description,
-      dueDate,
-      completed: task ? task.completed : false
+      completed: task?.completed || false
     };
     onSubmit(taskData);
   };
 
   return (
-    <View>
-      <Text style={styles.header}>{task ? 'Edit Task' : 'Add New Task'}</Text>
-      
-      <Text>Task Title</Text>
-      <TextInput
-        style={styles.input}
-        value={title}
-        onChangeText={setTitle}
-        placeholder="Enter task title"
-      />
-      
-      <Text>Description</Text>
-      <TextInput
-        style={[styles.input, styles.textArea]}
-        value={description}
-        onChangeText={setDescription}
-        placeholder="Enter task description"
-        multiline
-      />
-      
-      <Text>Due Date</Text>
-      <TextInput
-        style={styles.input}
-        value={dueDate}
-        onChangeText={setDueDate}
-        placeholder="mm/dd/yyyy"
-      />
-      
-      <TouchableOpacity style={styles.button} onPress={handleSubmit}>
-        <Text style={styles.buttonText}>{task ? 'Save Changes' : 'Create Task'}</Text>
-      </TouchableOpacity>
-      
-      {onCancel && (
+    <View style={styles.formContainer}>
+      <View style={styles.formGroup}>
+        <Text style={styles.inputLabel}>Task Title</Text>
+        <TextInput
+          style={styles.taskInput}
+          value={title}
+          onChangeText={setTitle}
+          placeholder="Enter task title"
+          placeholderTextColor="#999"
+        />
+      </View>
+
+      <View style={styles.formGroup}>
+        <Text style={styles.inputLabel}>Description</Text>
+        <TextInput
+          style={[styles.taskInput, styles.descriptionInput]}
+          value={description}
+          onChangeText={setDescription}
+          placeholder="Enter task description"
+          multiline
+          placeholderTextColor="#999"
+        />
+      </View>
+
+      <View style={styles.buttonContainer}>
         <TouchableOpacity 
-          style={[styles.button, { backgroundColor: '#ccc' }]} 
+          style={[styles.button, styles.cancelButton]} 
           onPress={onCancel}
         >
-          <Text style={styles.buttonText}>Cancel</Text>
+          <Text style={[styles.buttonText, styles.cancelButtonText]}>Cancel</Text>
         </TouchableOpacity>
-      )}
+        <TouchableOpacity 
+          style={[styles.button, styles.submitButton]} 
+          onPress={handleSubmit}
+        >
+          <Text style={[styles.buttonText, styles.submitButtonText]}>
+            {task ? 'Save Changes' : 'Create Task'}
+          </Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };

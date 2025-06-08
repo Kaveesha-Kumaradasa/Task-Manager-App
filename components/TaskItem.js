@@ -8,15 +8,15 @@ const TaskItem = ({ task, onPress, onToggleComplete }) => {
     <TouchableOpacity 
       onPress={onPress} 
       style={[
-        styles.enhancedTaskItem,
+        styles.taskItem,
         task.completed && styles.completedTaskItem
       ]}
     >
       <View style={styles.checkboxContainer}>
         <TouchableOpacity 
           style={[
-            styles.enhancedCheckbox,
-            task.completed && styles.enhancedCheckboxChecked
+            styles.checkbox,
+            task.completed && styles.checkboxChecked
           ]}
           onPress={() => onToggleComplete(task.id, !task.completed)}
         >
@@ -27,7 +27,7 @@ const TaskItem = ({ task, onPress, onToggleComplete }) => {
         <View style={styles.textContainer}>
           <Text 
             style={[
-              styles.enhancedTaskTitle,
+              styles.taskTitle,
               task.completed && styles.completedText
             ]}
           >
@@ -36,17 +36,12 @@ const TaskItem = ({ task, onPress, onToggleComplete }) => {
           {task.description && (
             <Text 
               style={[
-                styles.enhancedTaskDescription,
+                styles.taskDescription,
                 task.completed && styles.completedText
               ]}
               numberOfLines={2}
             >
               {task.description}
-            </Text>
-          )}
-          {task.dueDate && (
-            <Text style={styles.enhancedTaskDueDate}>
-              <Ionicons name="calendar" size={12} color="#666" /> {task.dueDate}
             </Text>
           )}
         </View>

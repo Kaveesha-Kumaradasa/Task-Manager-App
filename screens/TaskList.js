@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, FlatList, StatusBar } from 'react-native';
+import { View, Text, TouchableOpacity, FlatList } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { getTasks, updateTask } from '../services/api';
 import TaskItem from '../components/TaskItem';
@@ -9,12 +9,10 @@ import { styles } from '../styles/styles';
 const TaskList = () => {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [sortOption, setSortOption] = useState('all'); // 'all', 'new', 'completed', 'pending'
   const navigation = useNavigation();
 
-  useEffect(() => {
-    fetchTasks();
-  }, []);
-
+  // Fetch tasks from API
   const fetchTasks = async () => {
     try {
       const tasksData = await getTasks();
@@ -26,22 +24,54 @@ const TaskList = () => {
     }
   };
 
+  // Refresh task list
+  const refreshTasks = async () => {
+    setLoading(true);
+    try {
+      const tasksData = await getTasks();
+      setTasks(tasksData);
+    } catch (error) {
+      console.error('Error fetching tasks:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Sort and filter tasks based on selected option
+  const getFilteredTasks = () => {
+    switch (sortOption) {
+      case 'completed':
+        return tasks.filter(task => task.completed);
+      case 'pending':
+        return tasks.filter(task => !task.completed);
+      default:
+        return tasks;
+    }
+  };
+
   const handleToggleComplete = async (id, completed) => {
     try {
       await updateTask(id, { completed });
-      fetchTasks();
+      refreshTasks();
     } catch (error) {
       console.error('Error updating task:', error);
     }
   };
 
   const navigateToTaskDetails = (task) => {
-    navigation.navigate('TaskDetails', { task });
+    navigation.navigate('TaskDetails', { 
+      task,
+      refreshList: refreshTasks
+    });
   };
 
   const navigateToAddTask = () => {
-    navigation.navigate('AddTask');
+    navigation.navigate('AddTask', { refreshList: refreshTasks });
   };
+
+  useEffect(() => {
+    refreshTasks();
+  }, []);
 
   if (loading) {
     return (
@@ -51,17 +81,42 @@ const TaskList = () => {
     );
   }
 
+
   return (
     <View style={styles.mainContainer}>
-      
-      {/*<StatusBar backgroundColor="#6200EE" barStyle="light-content" />*/}
-      
-      {/*<View style={styles.appHeader}>
-        <Text style={styles.headerTitle}>My Tasks</Text>
-      </View>*/}
-      
+      {/* Sorting Options */}
+      <View style={styles.sortOptionsContainer}>
+        <TouchableOpacity 
+          style={[styles.sortOption, sortOption === 'all' && styles.activeSortOption]}
+          onPress={() => setSortOption('all')}
+        >
+          <Text style={[styles.sortOptionText, sortOption === 'all' && styles.activeSortOptionText]}>
+            All
+          </Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={[styles.sortOption, sortOption === 'completed' && styles.activeSortOption]}
+          onPress={() => setSortOption('completed')}
+        >
+          <Text style={[styles.sortOptionText, sortOption === 'completed' && styles.activeSortOptionText]}>
+            Completed
+          </Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={[styles.sortOption, sortOption === 'pending' && styles.activeSortOption]}
+          onPress={() => setSortOption('pending')}
+        >
+          <Text style={[styles.sortOptionText, sortOption === 'pending' && styles.activeSortOptionText]}>
+            Pending
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Task List */}
       <FlatList
-        data={tasks}
+        data={getFilteredTasks()}
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
           <TaskItem
@@ -79,6 +134,7 @@ const TaskList = () => {
         }
       />
       
+      {/* Add Task Button */}
       <TouchableOpacity 
         style={styles.fab} 
         onPress={navigateToAddTask}
